@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/itemSegmentRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/tvStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start: 00:00"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/tvEnd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Koniec: 00:30"
+        app:layout_constraintTop_toTopOf="@id/tvStart"
+        app:layout_constraintStart_toEndOf="@id/tvStart"
+        android:layout_marginStart="24dp"/>
+
+    <Button
+        android:id="@+id/btnPickEnd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Zmień koniec"
+        app:layout_constraintTop_toTopOf="@id/tvEnd"
+        app:layout_constraintStart_toEndOf="@id/tvEnd"
+        android:layout_marginStart="12dp"/>
+
+    <TextView
+        android:id="@+id/tvRate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Dawka: 0.80 U/h"
+        app:layout_constraintTop_toBottomOf="@id/tvStart"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <Button
+        android:id="@+id/btnPickRate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Zmień dawkę"
+        app:layout_constraintTop_toTopOf="@id/tvRate"
+        app:layout_constraintStart_toEndOf="@id/tvRate"
+        android:layout_marginStart="12dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
