@@ -52,33 +52,44 @@ public final class BasalProfile {
         if (segments.isEmpty()) throw new IllegalStateException("Profile must have at least one segment");
         if (segments.get(0).getStartMinutes() != 0)
             throw new IllegalStateException("First segment must start at 0");
+
+        if (segments.get(segments.size() - 1).getStartMinutes() >= 1440)
+            throw new IllegalStateException("Last segment start must be < 1440");
+
         // merge consecutive with same rateUnits
+        
         List<BasalSegment> merged = new ArrayList<>();
-        BasalSegment prev = null;
+        Integer lastStart = null;
+        Integer lastUnits = null;
+
         for (BasalSegment s : segments) {
             int start = s.getStartMinutes();
             int units = s.getRateUnits();
-            if (start < 0 || start >= 1440) throw new IllegalStateException("startMinutes out of range");
             if (!isMultipleOf30(start)) throw new IllegalStateException("startMinutes must be multiple of 30");
             if (units < 0) throw new IllegalStateException("rateUnits must be >= 0");
-            if (prev == null) {
-                merged.add(s);
-                prev = s;
-            } else {
-                if (start == prev.getStartMinutes()) throw new IllegalStateException("duplicate startMinutes " + start);
-                if (units == prev.getRateUnits()) {
-                    // same rate -> drop redundant change point
-                } else {
-                    merged.add(s);
-                    prev = s;
-                }
+
+            // Drop exact duplicates by start
+            if (lastStart != null && start == lastStart) {
+                // Replace last with current (latest wins), then merge same-units below
+                merged.set(merged.size() - 1, new BasalSegment(start, units));
+                lastUnits = units;
+                continue;
             }
+
+            // Merge consecutive same-units
+            if (lastUnits != null && units == lastUnits) {
+                // Redundant change point; skip
+                continue;
+            }
+
+            merged.add(new BasalSegment(start, units));
+            lastStart = start;
+            lastUnits = units;
         }
+
         segments.clear();
         segments.addAll(merged);
-        if (segments.get(segments.size() - 1).getStartMinutes() >= 1440) {
-            throw new IllegalStateException("last start must be < 1440");
-        }
+
     }
 
     private int toUnits(double rate) {
@@ -281,5 +292,120 @@ public final class BasalProfile {
         kept.sort(Comparator.comparingInt(BasalSegment::getStartMinutes));
         segments.clear();
         segments.addAll(kept);
+    }
+
+    private void appendChangePointUnique(List<BasalSegment> out, int start, int units) {
+        if (start >= 1440) return; // never create a change point at 24:00
+        if (!isMultipleOf30(start)) throw new IllegalArgumentException("start must align to 30-minute grid");
+        if (units < 0) throw new IllegalArgumentException("units must be >= 0");
+
+        if (out.isEmpty()) {
+            // First point in the day must be at 0
+            if (start != 0) throw new IllegalStateException("first change point must be at 00:00");
+            out.add(new BasalSegment(start, units));
+            return;
+        }
+
+        BasalSegment last = out.get(out.size() - 1);
+        int lastStart = last.getStartMinutes();
+        int lastUnits = last.getRateUnits();
+
+        if (start == lastStart) {
+            // Replace the last change point with new units
+            out.set(out.size() - 1, new BasalSegment(start, units));
+            return;
+        }
+
+        if (lastUnits == units) {
+            // No change at this time (redundant), skip
+            return;
+        }
+
+        out.add(new BasalSegment(start, units));
+    }
+
+    private int unitsAtOriginal(List<BasalSegment> original, int minutes) {
+        int idx = Collections.binarySearch(
+                original,
+                new BasalSegment(minutes, 0),
+                Comparator.comparingInt(BasalSegment::getStartMinutes));
+        if (idx >= 0) return original.get(idx).getRateUnits();
+        int insertionPoint = -idx - 1;
+        int pos = insertionPoint - 1;
+        if (pos < 0) throw new IllegalStateException("Profile malformed (no segment for time)");
+        return original.get(pos).getRateUnits();
+    }
+
+
+    private int firstIndexAtOrAfter(List<BasalSegment> original, int boundary) {
+        int idx = Collections.binarySearch(
+                original, new BasalSegment(boundary, 0),
+                Comparator.comparingInt(BasalSegment::getStartMinutes));
+        return (idx >= 0) ? idx : (-idx - 1);
+    }
+
+    private void rewriteRangeToUnits(int start, int end, int targetUnits) {
+        if (!isMultipleOf30(start) || !isMultipleOf30(end))
+            throw new IllegalArgumentException("hour range must align to 30-minute grid");
+        if (start < 0 || start >= 1440 || end <= start || end > 1440)
+            throw new IllegalArgumentException("invalid range");
+
+        // Work off a snapshot of the ORIGINAL segments
+        List<BasalSegment> original = new ArrayList<>(segments);
+        original.sort(Comparator.comparingInt(BasalSegment::getStartMinutes));
+
+        // Compute boundary units from ORIGINAL
+        int unitsAtStart = unitsAtOriginal(original, start);
+        Integer unitsAtEnd = (end < 1440) ? unitsAtOriginal(original, end) : null;
+
+        // Build the new list
+        List<BasalSegment> rebuilt = new ArrayList<>();
+
+        // 1) Copy all change points STRICTLY before 'start'
+        for (BasalSegment s : original) {
+            if (s.getStartMinutes() < start) {
+                if (rebuilt.isEmpty() && s.getStartMinutes() != 0)
+                    throw new IllegalStateException("first change point must start at 0");
+                // Avoid redundant change points while copying
+                appendChangePointUnique(rebuilt, s.getStartMinutes(), s.getRateUnits());
+            } else {
+                break;
+            }
+        }
+
+        // 2) At 'start', we ALWAYS set the targetUnits so the segment inside hour is defined
+        // If start==0, this guarantees the first change point exists
+        appendChangePointUnique(rebuilt, start, targetUnits);
+
+        // 3) Skip all original points in [start, end)
+        int idxEnd = firstIndexAtOrAfter(original, end);
+
+        // 4) At 'end', decide whether an explicit change point is needed
+        if (end < 1440) {
+            boolean thereIsOriginalPointAtEnd = (idxEnd < original.size()
+                    && original.get(idxEnd).getStartMinutes() == end);
+
+            if (!thereIsOriginalPointAtEnd) {
+                // No original change point at 'end'; add boundary only if dose after end differs
+                if (unitsAtEnd != null && unitsAtEnd != targetUnits) {
+                    appendChangePointUnique(rebuilt, end, unitsAtEnd);
+                }
+            } else {
+                // There is an original point at 'end': DO NOT add our own (avoid duplicates).
+                // The tail copy below will include it and switch to unitsAtEnd as needed.
+            }
+        }
+        // If end == 1440: never add a change point.
+
+        // 5) Copy tail (all change points at or after 'end')
+        for (int i = idxEnd; i < original.size(); i++) {
+            BasalSegment s = original.get(i);
+            // If the first tail point happens to be 'end' and we've already added a boundary, avoid duplication
+            appendChangePointUnique(rebuilt, s.getStartMinutes(), s.getRateUnits());
+        }
+
+        // 6) Commit
+        segments.clear();
+        segments.addAll(rebuilt);
     }
 }
