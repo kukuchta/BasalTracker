@@ -1,38 +1,27 @@
 package com.kukuchta.basaltracker.ui.editor;
 
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
-
 import com.kukuchta.basaltracker.R;
 import com.kukuchta.basaltracker.domain.BasalProfile;
 import com.kukuchta.basaltracker.viewmodel.ProfileViewModel;
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Description;
-import com.github.mikephil.charting.components.LimitLine;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.components.*;
+import com.github.mikephil.charting.data.*;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
-
 import java.util.ArrayList;
 import java.util.Locale;
 
 public class ProfileCombinedEditorFragment extends Fragment {
 
     private static final String ARG_PROFILE_ID = "profileId";
-
     public static ProfileCombinedEditorFragment newInstance(long profileId) {
         ProfileCombinedEditorFragment f = new ProfileCombinedEditorFragment();
         Bundle b = new Bundle();
@@ -43,7 +32,7 @@ public class ProfileCombinedEditorFragment extends Fragment {
 
     private ProfileViewModel viewModel;
 
-    // Shared UI
+    // Shared
     private TextView tvProfileName, tvAccuracy, tvTotalDailyDose, tvError;
     private MaterialButton btnSaveProfile, btnDiscardChanges;
 
@@ -51,13 +40,13 @@ public class ProfileCombinedEditorFragment extends Fragment {
     private MaterialButtonToggleGroup toggleMode;
     private View panelHourly, panelSegments;
 
-    // Hourly panel
+    // Hourly
     private LineChart chart;
     private TextView tvSelectedHour, tvHourDoseInfo;
     private MaterialButton btnLeft, btnRight, btnMinus, btnPlus;
-    private int selectedHour = 0; // [0..23]
+    private int selectedHour = 0;
 
-    // Segments panel
+    // Segments
     private androidx.recyclerview.widget.RecyclerView rvSegments;
     private BasalSegmentsAdapter segmentsAdapter;
 
@@ -73,12 +62,6 @@ public class ProfileCombinedEditorFragment extends Fragment {
         super.onViewCreated(v, savedInstanceState);
 
         viewModel = new ViewModelProvider(requireActivity()).get(ProfileViewModel.class);
-
-        Bundle args = getArguments();
-        if (args != null && args.containsKey(ARG_PROFILE_ID)) {
-            long id = args.getLong(ARG_PROFILE_ID, 0);
-            if (id > 0) viewModel.loadProfile(id);
-        }
 
         // Shared
         tvProfileName = v.findViewById(R.id.tvProfileName);
@@ -110,6 +93,12 @@ public class ProfileCombinedEditorFragment extends Fragment {
         setupToggle();
         setupActions();
 
+        Bundle args = getArguments();
+        if (args != null && args.containsKey(ARG_PROFILE_ID)) {
+            long id = args.getLong(ARG_PROFILE_ID, 0);
+            if (id > 0) viewModel.loadProfile(id);
+        }
+
         viewModel.getCurrentProfile().observe(getViewLifecycleOwner(), profile -> {
             if (profile != null) {
                 tvError.setVisibility(View.GONE);
@@ -124,17 +113,13 @@ public class ProfileCombinedEditorFragment extends Fragment {
             }
         });
 
-        switchToHourly(true); // default
+        switchToHourly(true);
     }
 
     private void setupToggle() {
         toggleMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
-            if (checkedId == R.id.btnModeHourly) {
-                switchToHourly(true);
-            } else if (checkedId == R.id.btnModeSegments) {
-                switchToHourly(false);
-            }
+            switchToHourly(checkedId == R.id.btnModeHourly);
         });
     }
 
@@ -227,60 +212,47 @@ public class ProfileCombinedEditorFragment extends Fragment {
         segmentsAdapter.submitList(profile.getSegments());
     }
 
-    // === Hourly panel: chart & info ===
+    // === Hourly chart ===
 
     private void setupChart() {
         chart.setNoDataText("Brak danych profilu.");
         Description desc = new Description();
-        desc.setText("Dawki bazalne (co 30 min)");
+        desc.setText("Dawki bazalne (co 1 h)");
         chart.setDescription(desc);
-
         chart.getAxisRight().setEnabled(false);
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setGranularity(1f); // 0..47 buckets
+        xAxis.setGranularity(1f); // 0..23
         xAxis.setLabelCount(12, true);
-
         chart.getLegend().setEnabled(false);
         chart.setPinchZoom(true);
         chart.setDoubleTapToZoomEnabled(true);
     }
 
     private void renderChart(@NonNull BasalProfile profile) {
-        double[] halfHours = profile.toHalfHourArray();
-        ArrayList<Entry> entries = new ArrayList<>(48);
-        for (int i = 0; i < halfHours.length; i++) {
-            entries.add(new Entry(i, (float) halfHours[i]));
-        }
-        LineDataSet dataSet = new LineDataSet(entries, "Profil");
-        dataSet.setLineWidth(2f);
-        dataSet.setColor(0xFF2196F3);
-        dataSet.setCircleRadius(0f);
-        dataSet.setDrawValues(false);
-
-        LineData lineData = new LineData(dataSet);
-        chart.setData(lineData);
+        double[] hours = profile.toHourArray();
+        ArrayList<Entry> entries = new ArrayList<>(24);
+        for (int i = 0; i < hours.length; i++) entries.add(new Entry(i, (float) hours[i]));
+        LineDataSet ds = new LineDataSet(entries, "Profil");
+        ds.setLineWidth(2f);
+        ds.setColor(0xFF2196F3);
+        ds.setCircleRadius(0f);
+        ds.setDrawValues(false);
+        chart.setData(new LineData(ds));
         chart.invalidate();
     }
 
     private void highlightSelectedHour() {
         XAxis xAxis = chart.getXAxis();
         xAxis.removeAllLimitLines();
-
-        int startBucket = selectedHour * 2;
-        int endBucket = startBucket + 2;
-
-        LimitLine llStart = new LimitLine(startBucket, "");
+        LimitLine llStart = new LimitLine(selectedHour, "");
         llStart.setLineColor(0xFFFFA000);
         llStart.setLineWidth(1.5f);
-
-        LimitLine llEnd = new LimitLine(endBucket, "");
+        LimitLine llEnd = new LimitLine(selectedHour + 1, "");
         llEnd.setLineColor(0xFFFFA000);
         llEnd.setLineWidth(1.5f);
-
         xAxis.addLimitLine(llStart);
         xAxis.addLimitLine(llEnd);
-
         chart.invalidate();
     }
 
@@ -290,19 +262,8 @@ public class ProfileCombinedEditorFragment extends Fragment {
     }
 
     private void updateHourInfo(@NonNull BasalProfile profile) {
-        int startMin = selectedHour * 60;
-        double r1 = profile.getBasalRate(startMin);       // h:00
-        double r2 = profile.getBasalRate(startMin + 30);  // h:30
-        double min = Math.min(r1, r2);
-        double max = Math.max(r1, r2);
-
-        if (Math.abs(max - min) < 1e-9) {
-            tvHourDoseInfo.setText(String.format(Locale.getDefault(),
-                    "Dawka: %.2f U/h (jednolita)", max));
-        } else {
-            tvHourDoseInfo.setText(String.format(Locale.getDefault(),
-                    "Dawka: zróżnicowana (%.2f–%.2f U/h)", min, max));
-        }
+        double rate = profile.getBasalRate(selectedHour * 60);
+        tvHourDoseInfo.setText(String.format(Locale.getDefault(), "Dawka: %.2f U/h", rate));
     }
 
     private void showError(String msg) {

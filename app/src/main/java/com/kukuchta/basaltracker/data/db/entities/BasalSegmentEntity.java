@@ -22,6 +22,6 @@ public class BasalSegmentEntity {
     @PrimaryKey(autoGenerate = true)
     public long id;
     public long profileId;
-    public int startMinutes; // change point [0..1439], multiple of 30, first = 0
+    public int startMinutes; // change point [0..1439], multiple of 60, first = 0
     public int rateUnits;    // rate = units * accuracy
 }
