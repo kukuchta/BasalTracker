@@ -173,17 +173,20 @@ public final class BasalProfile {
      */
     public void adjustRateForHour(int hour, boolean increase) {
         if (hour < 0 || hour > 23) throw new IllegalArgumentException("hour 0..23");
-        int start = hour * 60, end = start + 60;
+        int start = hour * 60;
+        int end = start + 60;
 
-        int maxUnits = Integer.MIN_VALUE, minUnits = Integer.MAX_VALUE;
-        forEachSubsegment(start, end, (s, e, u) -> {
-            if (u > maxUnits) maxUnits = u;
-            if (u < minUnits) minUnits = u;
-        });
+        // With a 60-minute grid, the rate is constant for the entire hour.
+        // We can just sample the rate at the beginning of the hour.
+        int currentUnits = unitsAt(start);
 
-        boolean allEqual = (maxUnits == minUnits);
-        int targetUnits = allEqual ? (increase ? maxUnits + 1 : maxUnits - 1) : (increase ? maxUnits : minUnits);
-        if (targetUnits < 0) throw new IllegalArgumentException("Rate would become negative");
+        int targetUnits = increase ? currentUnits + 1 : currentUnits - 1;
+
+        if (targetUnits < 0) {
+            // As per requirements, we should not allow the rate to become negative.
+            // We can throw or simply do nothing. Let's throw to make the caller aware.
+            throw new IllegalArgumentException("Rate would become negative");
+        }
 
         rewriteRangeToUnits60(start, end, targetUnits);
         normalizeAndValidate();
@@ -232,25 +235,6 @@ public final class BasalProfile {
         return (idx >= 0) ? idx : (-idx - 1);
     }
 
-    private interface SubsegmentVisitor { void visit(int s, int e, int units); }
-
-    private void forEachSubsegment(int start, int end, SubsegmentVisitor v) {
-        int i = Collections.binarySearch(segments, new BasalSegment(start, 0),
-                Comparator.comparingInt(BasalSegment::getStartMinutes));
-        int idx = (i >= 0) ? i : (-i - 2);
-        if (idx < 0) idx = 0;
-
-        while (idx < segments.size()) {
-            int s = Math.max(start, segments.get(idx).getStartMinutes());
-            int nextStart = (idx + 1 < segments.size()) ? segments.get(idx + 1).getStartMinutes() : 1440;
-            int e = Math.min(end, nextStart);
-            if (s >= e) break;
-            v.visit(s, e, segments.get(idx).getRateUnits());
-            if (nextStart >= end) break;
-            idx++;
-        }
-    }
-
     /** Append change point safely (hour grid), avoid duplicates & redundant points, never at 24:00. */
     private void appendChangePointUnique(List<BasalSegment> out, int start, int units) {
         if (start >= 1440) return; // never create change point at 24:00
@@ -281,7 +265,6 @@ public final class BasalProfile {
         List<BasalSegment> original = new ArrayList<>(segments);
         original.sort(Comparator.comparingInt(BasalSegment::getStartMinutes));
 
-        int unitsAtStart = unitsAtOriginal(original, start);
         Integer unitsAtEnd = (end < 1440) ? unitsAtOriginal(original, end) : null;
 
         List<BasalSegment> rebuilt = new ArrayList<>();
