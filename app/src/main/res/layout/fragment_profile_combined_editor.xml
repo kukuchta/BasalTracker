@@ -26,11 +26,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <!-- ================= SUMMARY ================= -->
+
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardSummary"
+                style="?attr/materialCardViewElevatedStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="16dp">
 
                 <LinearLayout
                     android:orientation="vertical"
@@ -40,54 +42,86 @@
 
                     <TextView
                         android:id="@+id/tvProfileName"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Nazwa profilu"
+                        android:textSize="18sp"
                         android:textStyle="bold"
-                        android:textSize="18sp" />
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
 
                     <TextView
                         android:id="@+id/tvAccuracy"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Accuracy: 0.05 U/h" />
+                        android:layout_height="wrap_content"/>
 
                     <TextView
                         android:id="@+id/tvTotalDailyDose"
+                        android:textStyle="bold"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Całkowita dawka dobowa: 0.00 U" />
+                        android:layout_height="wrap_content"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/toggleMode"
+            <!-- ================= EDIT MODE (CONNECTED BUTTONS) ================= -->
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                app:singleSelection="true"
-                app:selectionRequired="true"
-                app:checkedButton="@id/btnModeHourly">
+                android:layout_height="48dp"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnModeHourly"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:checkable="true"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Godzinowy" />
+                    android:text="Godzinowo"
+                    android:textAllCaps="false"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnModeCircadian"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:checkable="true"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="Kształt dobowy"
+                    android:textAllCaps="false"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnModeSegments"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:checkable="true"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Segmenty" />
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+                    android:text="Segmenty"
+                    android:textAllCaps="false"/>
+            </LinearLayout>
+
+            <!-- ================= MODE CONTEXT ================= -->
+
+            <TextView
+                android:id="@+id/tvEditModeHeader"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginBottom="2dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:id="@+id/tvEditModeHint"
+                android:textSize="13sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginBottom="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <!-- ================= PANELS ================= -->
 
             <FrameLayout
                 android:id="@+id/panelContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
+                <!-- ===== HOURLY / CIRCADIAN CHART PANEL ===== -->
 
                 <LinearLayout
                     android:id="@+id/panelHourly"
@@ -95,114 +129,149 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
-                    <com.github.mikephil.charting.charts.LineChart
-                        android:id="@+id/chartProfile"
+                    <!-- Chart surface -->
+                    <com.google.android.material.card.MaterialCardView
+                        style="?attr/materialCardViewFilledStyle"
                         android:layout_width="match_parent"
-                        android:layout_height="260dp" />
+                        android:layout_height="wrap_content">
 
+                        <com.github.mikephil.charting.charts.LineChart
+                            android:id="@+id/chartProfile"
+                            android:layout_width="match_parent"
+                            android:layout_height="260dp"/>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Info row -->
                     <LinearLayout
-                        android:id="@+id/infoBar"
                         android:orientation="horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
                         android:paddingTop="12dp"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
                         <TextView
                             android:id="@+id/tvSelectedHour"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Godzina: 00:00–01:00"
                             android:textStyle="bold"
-                            android:layout_marginEnd="12dp"/>
+                            android:layout_marginEnd="12dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
 
                         <TextView
                             android:id="@+id/tvHourDoseInfo"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Dawka: zróżnicowana (0.80–1.00 U/h)" />
+                            android:layout_height="wrap_content"/>
                     </LinearLayout>
 
+                    <!-- Controls -->
                     <LinearLayout
-                        android:id="@+id/controlsBar"
                         android:orientation="horizontal"
+                        android:layout_marginTop="12dp"
                         android:gravity="center"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingTop="8dp">
+                        android:layout_height="wrap_content">
 
+                        <!-- Navigation -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnLeft"
-                            android:text="←"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"/>
+                            style="?attr/materialButtonFilledTonalStyle"
+                            app:icon="@drawable/ic_chevron_left"
+                            app:iconSize="24dp"
+                            android:contentDescription="Poprzednia godzina"/>
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnRight"
-                            android:text="→"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"/>
-
+                        <!-- Decrease -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnMinus"
+                            style="?attr/materialButtonFilledStyle"
                             android:text="−"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"/>
+                            android:textSize="22sp"
+                            android:textAllCaps="false"/>
 
+                        <!-- Increase -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnPlus"
+                            style="?attr/materialButtonFilledStyle"
                             android:text="+"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"/>
+                            android:textSize="22sp"
+                            android:textAllCaps="false"/>
+
+                        <!-- Navigation -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnRight"
+                            style="?attr/materialButtonFilledTonalStyle"
+                            app:icon="@drawable/ic_chevron_right_24"
+                            app:iconSize="24dp"
+                            android:contentDescription="Następna godzina"/>
                     </LinearLayout>
                 </LinearLayout>
+
+                <!-- ===== CIRCADIAN APPLY ===== -->
+
+                <LinearLayout
+                    android:id="@+id/panelCircadian"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnApplyCircadian"
+                        style="?attr/materialButtonFilledStyle"
+                        android:text="Zastosuj kształt dobowy"
+                        android:textAllCaps="false"
+                        android:layout_marginTop="12dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"/>
+                </LinearLayout>
+
+                <!-- ===== SEGMENTS PANEL ===== -->
 
                 <LinearLayout
                     android:id="@+id/panelSegments"
                     android:orientation="vertical"
+                    android:visibility="gone"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone">
+                    android:layout_height="wrap_content">
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvSegments"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"/>
                 </LinearLayout>
             </FrameLayout>
 
+            <!-- ================= ERRORS ================= -->
+
             <TextView
                 android:id="@+id/tvError"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:textColor="@android:color/holo_red_dark"
                 android:visibility="gone"
-                android:paddingTop="8dp"/>
+                android:paddingTop="8dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <!-- ================= GLOBAL ACTIONS ================= -->
 
             <LinearLayout
-                android:id="@+id/actionsBar"
                 android:orientation="horizontal"
+                android:layout_marginTop="16dp"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp">
+                android:layout_height="wrap_content">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSaveProfile"
+                    style="?attr/materialButtonFilledStyle"
+                    android:text="Zapisz profil"
+                    android:textAllCaps="false"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Zapisz profil" />
+                    android:layout_weight="1"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDiscardChanges"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:text="Odrzuć zmiany"
+                    android:textAllCaps="false"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Odrzuć zmiany" />
+                    android:layout_weight="1"/>
             </LinearLayout>
 
         </LinearLayout>

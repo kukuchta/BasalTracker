@@ -1,5 +1,6 @@
 package com.kukuchta.basaltracker.ui.editor;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.*;
 import android.widget.TextView;
@@ -22,6 +23,7 @@ import java.util.Locale;
 public class ProfileCombinedEditorFragment extends Fragment {
 
     private static final String ARG_PROFILE_ID = "profileId";
+
     public static ProfileCombinedEditorFragment newInstance(long profileId) {
         ProfileCombinedEditorFragment f = new ProfileCombinedEditorFragment();
         Bundle b = new Bundle();
@@ -37,7 +39,8 @@ public class ProfileCombinedEditorFragment extends Fragment {
     private MaterialButton btnSaveProfile, btnDiscardChanges;
 
     // Toggle & panels
-    private MaterialButtonToggleGroup toggleMode;
+    private EditMode currentMode = EditMode.HOURLY;
+    private MaterialButton btnModeHourly, btnModeCircadian, btnModeSegments;
     private View panelHourly, panelSegments;
 
     // Hourly
@@ -72,7 +75,10 @@ public class ProfileCombinedEditorFragment extends Fragment {
         btnDiscardChanges = v.findViewById(R.id.btnDiscardChanges);
 
         // Toggle & panels
-        toggleMode = v.findViewById(R.id.toggleMode);
+        btnModeHourly = v.findViewById(R.id.btnModeHourly);
+        btnModeCircadian = v.findViewById(R.id.btnModeCircadian);
+        btnModeSegments = v.findViewById(R.id.btnModeSegments);
+
         panelHourly = v.findViewById(R.id.panelHourly);
         panelSegments = v.findViewById(R.id.panelSegments);
 
@@ -90,7 +96,7 @@ public class ProfileCombinedEditorFragment extends Fragment {
         rvSegments.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         setupChart();
-        setupToggle();
+        setupModeButtons();
         setupActions();
 
         Bundle args = getArguments();
@@ -113,19 +119,90 @@ public class ProfileCombinedEditorFragment extends Fragment {
             }
         });
 
-        switchToHourly(true);
+        switchMode(EditMode.HOURLY);
     }
 
-    private void setupToggle() {
-        toggleMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) return;
-            switchToHourly(checkedId == R.id.btnModeHourly);
-        });
+    private void setupModeButtons() {
+        btnModeHourly.setOnClickListener(v -> switchMode(EditMode.HOURLY));
+        btnModeCircadian.setOnClickListener(v -> switchMode(EditMode.CIRCADIAN));
+        btnModeSegments.setOnClickListener(v -> switchMode(EditMode.SEGMENTS));
     }
 
-    private void switchToHourly(boolean hourly) {
-        panelHourly.setVisibility(hourly ? View.VISIBLE : View.GONE);
-        panelSegments.setVisibility(hourly ? View.GONE : View.VISIBLE);
+    private void switchMode(@NonNull EditMode mode) {
+        if (currentMode == mode) return;
+
+        currentMode = mode;
+
+        updateModeButtons();
+        updatePanels();
+        updateChartInteractivity();
+        updateControls();
+        updateModeHeader();
+    }
+
+    private void updateModeButtons() {
+        setModeButtonSelected(btnModeHourly, currentMode == EditMode.HOURLY);
+        setModeButtonSelected(btnModeCircadian, currentMode == EditMode.CIRCADIAN);
+        setModeButtonSelected(btnModeSegments, currentMode == EditMode.SEGMENTS);
+    }
+
+    private void setModeButtonSelected(MaterialButton button, boolean selected) {
+        button.setChecked(selected); // if using checkable buttons
+        button.setEnabled(!selected); // optional: prevents re-click
+    }
+
+    private void updatePanels() {
+        panelHourly.setVisibility(
+                currentMode == EditMode.HOURLY || currentMode == EditMode.CIRCADIAN
+                        ? View.VISIBLE
+                        : View.GONE
+        );
+
+        panelSegments.setVisibility(
+                currentMode == EditMode.SEGMENTS
+                        ? View.VISIBLE
+                        : View.GONE
+        );
+    }
+
+    private void updateChartInteractivity() {
+        boolean interactive = currentMode == EditMode.HOURLY;
+
+        chart.setTouchEnabled(interactive);
+        chart.setDragEnabled(interactive);
+        chart.setHighlightPerTapEnabled(interactive);
+    }
+
+    private void updateControls() {
+        boolean hourly = currentMode == EditMode.HOURLY;
+
+        btnPlus.setEnabled(hourly);
+        btnMinus.setEnabled(hourly);
+        btnLeft.setEnabled(hourly);
+        btnRight.setEnabled(hourly);
+
+        btnApplyCircadian.setVisibility(
+                currentMode == EditMode.CIRCADIAN ? View.VISIBLE : View.GONE
+        );
+    }
+
+    private void updateModeHeader() {
+        switch (currentMode) {
+            case HOURLY:
+                tvEditModeHeader.setText("Edycja godzinowa");
+                tvEditModeHint.setText("Zmieniasz pojedyncze godziny");
+                break;
+
+            case CIRCADIAN:
+                tvEditModeHeader.setText("Kształt dobowy");
+                tvEditModeHint.setText("Dopasowujesz cały profil");
+                break;
+
+            case SEGMENTS:
+                tvEditModeHeader.setText("Segmenty");
+                tvEditModeHint.setText("Edytujesz bloki czasowe");
+                break;
+        }
     }
 
     private void setupActions() {
@@ -215,29 +292,105 @@ public class ProfileCombinedEditorFragment extends Fragment {
     // === Hourly chart ===
 
     private void setupChart() {
+        // ---- Empty state ----
         chart.setNoDataText("Brak danych profilu.");
+        chart.setNoDataTextColor(Color.GRAY);
+
+        // ---- Description ----
         Description desc = new Description();
-        desc.setText("Dawki bazalne (co 1 h)");
+        desc.setText("Dawki bazalne (U/h)");
+        desc.setTextSize(12f);
         chart.setDescription(desc);
-        chart.getAxisRight().setEnabled(false);
-        XAxis xAxis = chart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setGranularity(1f); // 0..23
-        xAxis.setLabelCount(12, true);
-        chart.getLegend().setEnabled(false);
+
+        // ---- General chart behavior ----
+        chart.setDrawGridBackground(false);
+        chart.setDrawBorders(false);
+
         chart.setPinchZoom(true);
         chart.setDoubleTapToZoomEnabled(true);
+        chart.setScaleYEnabled(false); // UX: accidental Y zoom is confusing
+        chart.setDragEnabled(true);
+
+        chart.setExtraTopOffset(8f);
+        chart.setExtraBottomOffset(8f);
+        chart.setExtraLeftOffset(12f);
+        chart.setExtraRightOffset(12f);
+
+        // ---- Legend ----
+        // Disabled for now; enable later for dual-profile preview if needed
+        chart.getLegend().setEnabled(false);
+
+        // ---- Right axis (not needed) ----
+        chart.getAxisRight().setEnabled(false);
+
+        // ---- Left axis (dose axis) ----
+        YAxis leftAxis = chart.getAxisLeft();
+        leftAxis.setAxisMinimum(0f); // Basal dose never negative
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setGridLineWidth(0.5f);
+        leftAxis.setTextSize(11f);
+        leftAxis.setGranularityEnabled(true);
+        leftAxis.setGranularity(0.1f); // UX-friendly default; actual snapping handled elsewhere
+
+        // ---- X axis (time) ----
+        XAxis xAxis = chart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+
+        // 0..24 hours
+        xAxis.setAxisMinimum(0f);
+        xAxis.setAxisMaximum(24f);
+
+        // Hour resolution
+        xAxis.setGranularity(1f);
+        xAxis.setGranularityEnabled(true);
+
+        // Fewer labels = calmer chart
+        xAxis.setLabelCount(9, true); // e.g. 0,3,6,9,12,15,18,21,24
+        xAxis.setTextSize(11f);
+
+        // Grid lines only vertical (time guidance)
+        xAxis.setDrawGridLines(true);
+        xAxis.setGridLineWidth(0.5f);
+
+        // Optional: format as hours (00, 03, …)
+        // xAxis.setValueFormatter(new HourAxisFormatter());
+
+        // ---- Interaction polish ----
+        chart.setHighlightPerTapEnabled(false);
+        chart.setHighlightPerDragEnabled(false);
+
+        // Smooth redraws for live preview
+        chart.animateX(0);
     }
 
     private void renderChart(@NonNull BasalProfile profile) {
         double[] hours = profile.toHourArray();
-        ArrayList<Entry> entries = new ArrayList<>(24);
-        for (int i = 0; i < hours.length; i++) entries.add(new Entry(i, (float) hours[i]));
-        LineDataSet ds = new LineDataSet(entries, "Profil");
+
+        // 24 hours + explicit endpoint at 24:00
+        ArrayList<Entry> entries = new ArrayList<>(hours.length + 1);
+
+        for (int i = 0; i < hours.length; i++) {
+            entries.add(new Entry(i, (float) hours[i]));
+        }
+
+        // Important: extend last value to 24:00
+        entries.add(new Entry(24f, (float) hours[hours.length - 1]));
+
+        LineDataSet ds = new LineDataSet(entries, null);
+
+        // ---- Stepped basal semantics ----
+        ds.setMode(LineDataSet.Mode.STEPPED);
+
+        // ---- Visual clarity ----
         ds.setLineWidth(2f);
         ds.setColor(0xFF2196F3);
-        ds.setCircleRadius(0f);
-        ds.setDrawValues(false);
+
+        ds.setDrawCircles(false);   // Correct way to disable circles
+        ds.setDrawValues(false);    // No numeric clutter
+
+        // ---- Interaction ----
+        ds.setHighlightEnabled(false);
+
         chart.setData(new LineData(ds));
         chart.invalidate();
     }
@@ -245,14 +398,24 @@ public class ProfileCombinedEditorFragment extends Fragment {
     private void highlightSelectedHour() {
         XAxis xAxis = chart.getXAxis();
         xAxis.removeAllLimitLines();
-        LimitLine llStart = new LimitLine(selectedHour, "");
-        llStart.setLineColor(0xFFFFA000);
-        llStart.setLineWidth(1.5f);
-        LimitLine llEnd = new LimitLine(selectedHour + 1, "");
-        llEnd.setLineColor(0xFFFFA000);
-        llEnd.setLineWidth(1.5f);
-        xAxis.addLimitLine(llStart);
-        xAxis.addLimitLine(llEnd);
+
+        // Center of the selected hour block
+        float centerX = selectedHour + 0.5f;
+
+        LimitLine hourBand = new LimitLine(centerX, "");
+
+        // Accent color with low alpha
+        hourBand.setLineColor(0x33FFA000); // ~20% alpha amber
+        hourBand.setLineWidth(20f);        // Wide enough to read as a band
+
+        // No label, no dashes
+        hourBand.setTextSize(0f);
+        hourBand.enableDashedLine(0f, 0f, 0f);
+
+        // Draw behind data for proper layering
+        // hourBand.setDrawBehindData(true);
+
+        xAxis.addLimitLine(hourBand);
         chart.invalidate();
     }
 
@@ -271,4 +434,10 @@ public class ProfileCombinedEditorFragment extends Fragment {
         tvError.setVisibility(View.VISIBLE);
         Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
     }
+}
+
+enum EditMode {
+    HOURLY,
+    CIRCADIAN,
+    SEGMENTS
 }
