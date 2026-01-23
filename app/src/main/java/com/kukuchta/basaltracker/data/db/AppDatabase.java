@@ -4,10 +4,9 @@ import androidx.room.Database;
 import androidx.room.RoomDatabase;
 
 import com.kukuchta.basaltracker.data.db.entities.BasalProfileEntity;
-import com.kukuchta.basaltracker.data.db.entities.BasalSegmentEntity;
 
 @Database(
-        entities = {BasalProfileEntity.class, BasalSegmentEntity.class},
+        entities = { BasalProfileEntity.class },
         version = 1,
         exportSchema = false
 )

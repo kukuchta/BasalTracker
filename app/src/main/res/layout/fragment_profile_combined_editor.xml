@@ -27,7 +27,6 @@
             android:layout_height="wrap_content">
 
             <!-- ================= SUMMARY ================= -->
-
             <com.google.android.material.card.MaterialCardView
                 style="?attr/materialCardViewElevatedStyle"
                 android:layout_width="match_parent"
@@ -57,11 +56,11 @@
                         android:textStyle="bold"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"/>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <!-- ================= EDIT MODE (CONNECTED BUTTONS) ================= -->
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
@@ -94,10 +93,10 @@
                     android:layout_weight="1"
                     android:text="Segmenty"
                     android:textAllCaps="false"/>
+
             </LinearLayout>
 
             <!-- ================= MODE CONTEXT ================= -->
-
             <TextView
                 android:id="@+id/tvEditModeHeader"
                 android:textStyle="bold"
@@ -115,14 +114,12 @@
                 android:layout_height="wrap_content"/>
 
             <!-- ================= PANELS ================= -->
-
             <FrameLayout
                 android:id="@+id/panelContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <!-- ===== HOURLY / CIRCADIAN CHART PANEL ===== -->
-
                 <LinearLayout
                     android:id="@+id/panelHourly"
                     android:orientation="vertical"
@@ -205,7 +202,6 @@
                 </LinearLayout>
 
                 <!-- ===== CIRCADIAN APPLY ===== -->
-
                 <LinearLayout
                     android:id="@+id/panelCircadian"
                     android:orientation="vertical"
@@ -223,8 +219,7 @@
                         android:layout_height="52dp"/>
                 </LinearLayout>
 
-                <!-- ===== SEGMENTS PANEL ===== -->
-
+                <!-- ===== SEGMENTS (COMPRESSED LIST) ===== -->
                 <LinearLayout
                     android:id="@+id/panelSegments"
                     android:orientation="vertical"
@@ -240,7 +235,6 @@
             </FrameLayout>
 
             <!-- ================= ERRORS ================= -->
-
             <TextView
                 android:id="@+id/tvError"
                 android:textColor="@android:color/holo_red_dark"
@@ -250,7 +244,6 @@
                 android:layout_height="wrap_content"/>
 
             <!-- ================= GLOBAL ACTIONS ================= -->
-
             <LinearLayout
                 android:orientation="horizontal"
                 android:layout_marginTop="16dp"
