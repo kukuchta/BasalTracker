@@ -10,7 +10,6 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.kukuchta.basaltracker.data.repo.BasalProfileRepository;
 import com.kukuchta.basaltracker.domain.BasalProfile;
-import com.kukuchta.basaltracker.domain.BasalProfileDiff;
 import com.kukuchta.basaltracker.domain.ProfileOrigin;
 import com.kukuchta.basaltracker.ui.editor.SegmentProjector;
 import com.kukuchta.basaltracker.ui.editor.UiSegment;
@@ -26,7 +25,6 @@ public class ProfileViewModel extends AndroidViewModel {
 
     private final MutableLiveData<List<BasalProfile>> profiles = new MutableLiveData<>();
     private final MutableLiveData<BasalProfile> currentProfile = new MutableLiveData<>();
-    private final MutableLiveData<BasalProfileDiff> comparisonResult = new MutableLiveData<>();
 
     // Compressed, UI-facing representation of contiguous runs of equal hourly units
     private final MediatorLiveData<List<UiSegment>> uiSegments = new MediatorLiveData<>();
@@ -51,7 +49,6 @@ public class ProfileViewModel extends AndroidViewModel {
     // --- Exposed LiveData ---
     public LiveData<List<BasalProfile>> getProfiles() { return profiles; }
     public LiveData<BasalProfile> getCurrentProfile() { return currentProfile; }
-    public LiveData<BasalProfileDiff> getComparisonResult() { return comparisonResult; }
     public LiveData<List<UiSegment>> getUiSegments() { return uiSegments; }
 
     // --- List & persistence ---
@@ -165,11 +162,5 @@ public class ProfileViewModel extends AndroidViewModel {
             loadProfile(id);
             loadAllProfiles();
         });
-    }
-
-    public void compareProfiles(long id1, long id2) {
-        repo.getProfile(id1, p1 -> repo.getProfile(id2, p2 -> {
-            if (p1 != null && p2 != null) comparisonResult.postValue(p1.diff(p2));
-        }));
     }
 }

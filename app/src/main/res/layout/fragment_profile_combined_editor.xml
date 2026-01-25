@@ -72,6 +72,7 @@
                     style="?attr/materialButtonOutlinedStyle"
                     android:checkable="true"
                     android:layout_width="0dp"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:text="Godzinowo"
                     android:textAllCaps="false"/>
@@ -81,6 +82,7 @@
                     style="?attr/materialButtonOutlinedStyle"
                     android:checkable="true"
                     android:layout_width="0dp"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:text="Kształt dobowy"
                     android:textAllCaps="false"/>
@@ -90,6 +92,7 @@
                     style="?attr/materialButtonOutlinedStyle"
                     android:checkable="true"
                     android:layout_width="0dp"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:text="Segmenty"
                     android:textAllCaps="false"/>
@@ -170,33 +173,41 @@
                         <!-- Navigation -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnLeft"
-                            style="?attr/materialButtonFilledTonalStyle"
+                            style="?attr/materialButtonTonalStyle"
                             app:icon="@drawable/ic_chevron_left"
                             app:iconSize="24dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:contentDescription="Poprzednia godzina"/>
 
                         <!-- Decrease -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnMinus"
-                            style="?attr/materialButtonFilledStyle"
+                            style="?attr/materialButtonStyle"
                             android:text="−"
                             android:textSize="22sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:textAllCaps="false"/>
 
                         <!-- Increase -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnPlus"
-                            style="?attr/materialButtonFilledStyle"
+                            style="?attr/materialButtonStyle"
                             android:text="+"
                             android:textSize="22sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:textAllCaps="false"/>
 
                         <!-- Navigation -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnRight"
-                            style="?attr/materialButtonFilledTonalStyle"
-                            app:icon="@drawable/ic_chevron_right_24"
+                            style="?attr/materialButtonTonalStyle"
+                            app:icon="@drawable/ic_chevron_right"
                             app:iconSize="24dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:contentDescription="Następna godzina"/>
                     </LinearLayout>
                 </LinearLayout>
@@ -211,7 +222,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnApplyCircadian"
-                        style="?attr/materialButtonFilledStyle"
+                        style="?attr/materialButtonStyle"
                         android:text="Zastosuj kształt dobowy"
                         android:textAllCaps="false"
                         android:layout_marginTop="12dp"
@@ -252,7 +263,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSaveProfile"
-                    style="?attr/materialButtonFilledStyle"
+                    style="?attr/materialButtonStyle"
                     android:text="Zapisz profil"
                     android:textAllCaps="false"
                     android:layout_width="0dp"

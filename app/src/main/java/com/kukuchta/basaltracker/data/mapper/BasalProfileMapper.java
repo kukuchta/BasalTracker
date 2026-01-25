@@ -65,4 +65,3 @@ public final class BasalProfileMapper {
         return (m == null) ? new HashMap<>() : m;
     }
 }
-``

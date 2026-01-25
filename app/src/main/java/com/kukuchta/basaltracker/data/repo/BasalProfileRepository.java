@@ -6,6 +6,7 @@ import androidx.room.Room;
 
 import com.kukuchta.basaltracker.data.db.AppDatabase;
 import com.kukuchta.basaltracker.data.db.BasalProfileDao;
+import com.kukuchta.basaltracker.data.db.DatabaseProvider;
 import com.kukuchta.basaltracker.data.db.entities.BasalProfileEntity;
 import com.kukuchta.basaltracker.data.mapper.BasalProfileMapper;
 import com.kukuchta.basaltracker.domain.BasalProfile;
@@ -23,9 +24,7 @@ public class BasalProfileRepository {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
 
     public BasalProfileRepository(Application app) {
-        db = Room.databaseBuilder(app, AppDatabase.class, "basal-db")
-                .fallbackToDestructiveMigration()
-                .build();
+        db = DatabaseProvider.getDatabase(app);
         dao = db.basalProfileDao();
     }
 
