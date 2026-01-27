@@ -264,18 +264,22 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSaveProfile"
                     style="?attr/materialButtonStyle"
-                    android:text="Zapisz profil"
-                    android:textAllCaps="false"
                     android:layout_width="0dp"
-                    android:layout_weight="1"/>
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Zapisz profil"
+                    android:textAllCaps="false" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDiscardChanges"
                     style="?attr/materialButtonOutlinedStyle"
-                    android:text="Odrzuć zmiany"
-                    android:textAllCaps="false"
                     android:layout_width="0dp"
-                    android:layout_weight="1"/>
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Odrzuć zmiany"
+                    android:textAllCaps="false" />
             </LinearLayout>
 
         </LinearLayout>
