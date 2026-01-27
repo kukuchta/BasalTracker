@@ -54,8 +54,9 @@ public class ProfileListFragment extends Fragment {
 
             @Override
             public void onDuplicate(BasalProfile profile) {
-                viewModel.duplicateProfile(profile.getId(), " (kopia)", () -> openEditor(viewModel.getCurrentProfile().getValue().getId()));
+                viewModel.duplicateProfile(profile.getId(), " (kopia)", newProfileId -> {});
             }
+
 
             @Override
             public void onDelete(BasalProfile profile) {
@@ -70,11 +71,8 @@ public class ProfileListFragment extends Fragment {
         viewModel.loadAllProfiles();
 
         fabAdd.setOnClickListener(x -> {
-            // Create empty profile (default accuracy 0.05) and open editor
-            viewModel.createEmptyProfile("Nowy profil", 0.05, () -> {
-                BasalProfile p = viewModel.getCurrentProfile().getValue();
-                if (p != null) openEditor(p.getId());
-            });
+            // Create empty profile and open editor with the returned ID
+            viewModel.createEmptyProfile("Nowy profil", 0.05, this::openEditor);
         });
     }
 

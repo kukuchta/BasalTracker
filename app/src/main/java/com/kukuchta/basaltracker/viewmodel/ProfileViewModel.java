@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ProfileViewModel extends AndroidViewModel {
 
@@ -54,19 +55,23 @@ public class ProfileViewModel extends AndroidViewModel {
     // --- List & persistence ---
     public void loadAllProfiles() { repo.getAllProfiles(profiles::postValue); }
 
-    public void createEmptyProfile(String name, double accuracy, Runnable onSuccessWithOpen) {
+    public void createEmptyProfile(String name, double accuracy, Consumer<Long> onSuccessWithId) {
         repo.createEmptyProfile(name, accuracy, id -> {
             currentProfileId = id;
-            loadProfile(id);
-            if (onSuccessWithOpen != null) onSuccessWithOpen.run();
+            loadAllProfiles(); // Refresh the list
+            loadProfile(id, p -> {
+                if (onSuccessWithId != null) onSuccessWithId.accept(id);
+            });
         });
     }
 
-    public void duplicateProfile(long id, String nameSuffix, Runnable onSuccessWithOpen) {
+    public void duplicateProfile(long id, String nameSuffix, Consumer<Long> onSuccessWithId) {
         repo.duplicateProfile(id, nameSuffix, newId -> {
             currentProfileId = newId;
-            loadProfile(newId);
-            if (onSuccessWithOpen != null) onSuccessWithOpen.run();
+            loadAllProfiles(); // Refresh the list
+            loadProfile(newId, p -> {
+                if (onSuccessWithId != null) onSuccessWithId.accept(newId);
+            });
         });
     }
 
@@ -79,9 +84,19 @@ public class ProfileViewModel extends AndroidViewModel {
 
     // --- Editor ---
     public void loadProfile(long id) {
-        currentProfileId = id;
-        repo.getProfile(id, currentProfile::postValue);
+        loadProfile(id, null);
     }
+
+    private void loadProfile(long id, Consumer<BasalProfile> onLoaded) {
+        currentProfileId = id;
+        repo.getProfile(id, p -> {
+            currentProfile.postValue(p);
+            if (onLoaded != null) {
+                onLoaded.accept(p);
+            }
+        });
+    }
+
 
     public void setCurrentProfile(BasalProfile p) {
         currentProfileId = p.getId();
